@@ -12,19 +12,144 @@
 
   <div class="container">
     <h1>Albums</h1>
-    <ul id="albums-list"></ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Artist</th>
+          <th>Year</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="albumTable"></tbody>
+    </table>
+    
     <script src="index.js">
       // Fetch albums from server
-      fetch('http://localhost:3000/albums')
+      fetch('http://localhost:3000/api/albums')
         .then(response => response.json())
         .then(albums => {
-          // Add each album to the list
-          const albumsList = document.getElementById('albums-list');
-          albums.forEach(album => {
-            const listItem = document.createElement('li');
-            listItem.textContent = `${album.title} - ${album.artist} (${album.year})`;
-            albumsList.appendChild(listItem);
-          });
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', 'http://localhost:3000/api/albums');
+          xhr.onload = function() {
+            if (xhr.status === 200) {
+              const data = JSON.parse(xhr.responseText);
+              // Call a function to create the table and populate it with the data
+              createTable(data);
+            } else {
+              console.error('Error fetching album data from the API.');
+            }
+          };
+          xhr.send();
+
+          for (const album of albums) {
+
+            const tableRow = document.createElement('tr');
+
+            const titleCell = document.createElement('td');
+            titleCell.innerText = album.title;
+            const artistCell = document.createElement('td');
+            artistCell.innerText = album.artist;
+            const yearCell = document.createElement('td');
+            yearCell.innerText = album.year;
+
+            const editButton = document.createElement('button');
+            editButton.innerText = 'Edit';
+
+            const deleteButton = document.createElement('button');
+            deleteButton.innerText = 'Delete';
+            
+
+            editButton.addEventListener('click', () => {
+              showUpdateForm(album);
+            });
+            deleteButton.addEventListener('click', () => {
+    
+              deleteAlbum(album.id);
+              
+            });
+            
+            function showUpdateForm(album) {
+    
+            const tableRow = document.querySelector(`#album-${album.id}`);
+
+
+            const form = document.createElement('form');
+            form.innerHTML = `
+              <label for="title">Title:</label>
+              <input type="text" id="title" name="title" value="${album.title}">
+              <br>
+              <label for="artist">Artist:</label>
+              <input type="text" id="artist" name="artist" value="${album.artist}">
+              <br>
+              <label for="year">Year:</label>
+              <input type="number" id="year" name="year" value="${album.year}">
+              <br>
+              <button type="submit">Save</button>
+              <button type="button" onclick="hideUpdateForm()">Cancel</button>
+            `;
+
+            // Set the form's submit event handler to send an AJAX PUT request to update the album
+            form.addEventListener('submit', (event) => {
+              event.preventDefault();
+              const updatedAlbum = {
+                id: album.id,
+                title: event.target.title.value,
+                artist: event.target.artist.value,
+                year: event.target.year.value,
+              };
+              updateAlbum(updatedAlbum)
+                .then(() => {
+                  // Hide the form and update the table row with the new album details
+                  hideUpdateForm();
+                  tableRow.innerHTML = `
+                    <td>${updatedAlbum.title}</td>
+                    <td>${updatedAlbum.artist}</td>
+                    <td>${updatedAlbum.year}</td>
+                    <td>
+                      <button onclick="showDetails(${updatedAlbum.id})">Details</button>
+                      <button onclick="showUpdateForm(${JSON.stringify(updatedAlbum)})">Update</button>
+                      <button onclick="showDeleteConfirmation(${updatedAlbum.id})">Delete</button>
+                    </td>
+                  `;
+                })
+                .catch((error) => console.error(error));
+            });
+
+            // Replace the table row with the update form
+            tableRow.replaceWith(form);
+          }
+
+            function deleteAlbum(albumId) {
+            const check = confirm('Do you really want to delete this album?');
+              if (check) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('DELETE', `http://localhost:3000/api/albums/${albumId}`);
+                xhr.onload = function() {
+                  if (xhr.status === 200) {
+                    const rowToDelete = document.querySelector(`tr[data-id="${albumId}"]`);
+                    rowToDelete.parentNode.removeChild(rowToDelete);
+                  } else {
+                    console.error('Error deleting album from the API.');
+                  }
+                };
+                xhr.send();
+              }
+            }
+            const actionsCell = document.createElement('td');
+            actionsCell.appendChild(editButton);
+            actionsCell.appendChild(deleteButton);
+
+            // Add the album data and buttons to the table row
+            tableRow.appendChild(titleCell);
+            tableRow.appendChild(artistCell);
+            tableRow.appendChild(yearCell);
+            tableRow.appendChild(actionsCell);
+
+            // Add the table row to the table body
+            albumTableBody.appendChild(tableRow);
+
+            }
         })
         .catch(error => {
           console.error('Error fetching albums:', error);

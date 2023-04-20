@@ -14,7 +14,7 @@ const port = process.env.PORT || 3000;
 try {
     mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
-    console.log('Connected to the database');
+    console.log('Connecting to the database');
 
     const db = mongoose.connection;
     db.on('connected', console.log.bind(console,'MongoDB and Mongoose connected'));
@@ -24,8 +24,8 @@ try {
   }
 
 //midleware
-app.use('/api', route);
 app.use(express.json());
+app.use('/api', route);
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, '/index.html'));
