@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: albums
+    env: node
+    repo: https://github.com/GonCar/Full_Stack_Lab2.git
+    buildCommand: cd examples/echo-bot;npm install
+    startCommand: cd examples/echo-bot;node .
+    envVars:
+      - key: MONGODB_URI
+        fromDatabase:
+          name: Gon
+          property: XTrSagBxCnMC1Fq
