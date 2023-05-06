@@ -27,9 +27,10 @@ try {
 
 //midleware
 app.use(express.json());
-//app.use('/api', route);
+app.use('/api', route);
 app.set('view engine', 'ejs');
 const Album = require("./models/album");
+
 
 app.get("/", (req, res) => {
   Album.find({}, function(err, albums){

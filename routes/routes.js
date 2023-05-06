@@ -20,13 +20,13 @@ router.get('/albums/:title', async (req, res) => {
 });
 
 router.post('/albums', async (req, res) => {
-    const { id, title, artist, year } = req.body;
-    const album = new Album({ id, title, artist, year });
+    const { title, artist, year } = req.body;
+    const album = new Album({ title, artist, year });
     await album.save();
     res.status(201).json(album);
 });
 
-router.put('/albums/:id', async (req, res) => {
+router.put('/albums/:_id', async (req, res) => {
     const album = await Album.findOne({ id: req.params.id });
     if (!album) {
         res.status(404).json({ error: 'Album not found' });
@@ -40,7 +40,7 @@ router.put('/albums/:id', async (req, res) => {
     }
 });
 
-router.delete('albums/:id', async (req, res) => {
+router.delete('/albums/:_id', async (req, res) => {
     const album = await Album.findOne({ id: req.params.id });
     if (!album) {
         res.status(404).json({ error: 'Album not found' });
