@@ -38,14 +38,24 @@
         </table>
 
         <form id="update-form" style="display:none">
+          <div class="form-group">
             <input type="text" id="title" placeholder="Title">
+          </div>
+          <div class="form-group">
             <input type="text" id="artist" placeholder="Artist">
+          </div>  
+          <div class="form-group">
             <input type="number" id="year" placeholder="Year">
-            <button type="submit" onclick="updateAlbum()">Save Changes</button>
+          </div>
+            <button class="btn btn-primary" type="submit" onclick="updateAlbum()">Save Changes</button>
         </form>
     </div>
 
+    <input type="hidden" id="albumsList" value='<%- JSON.stringify(albumsList) %>'>
     <script>
+
+        var albumsList = JSON.parse(document.getElementById('albumsList').value); 
+
         function showUpdateForm(id) {
           var album = albumsList.find(function(album) { return album._id === id; });
           document.getElementById('title').value = album.title;
@@ -58,34 +68,37 @@
             document.getElementById('update-form').style.display = 'none';
           }
         }
-        
-        function updateAlbum(id) {
-          var title = document.getElementById('title').value;
-          var artist = document.getElementById('artist').value;
-          var year = document.getElementById('year').value;
-          fetch('/api/albums/' + id, {
-            method: 'PUT',
-            body: JSON.stringify({ title: title, artist: artist, year: year }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-          .then(function(response) {
+       
+        async function updateAlbum(id) {
+          try {
+            var title = document.getElementById('title').value;
+            var artist = document.getElementById('artist').value;
+            var year = document.getElementById('year').value;
+
+            const response = await fetch('/api/albums/' + id, {
+              method: 'PUT',
+              body: JSON.stringify({ title: title, artist: artist, year: year }),
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
             if (response.ok) {
-              return response.json();
+              const updatedAlbum = await response.json();
+              var index = albumsList.findIndex(function(album) {
+                return album._id === updatedAlbum._id;
+              });
+              albumsList[index] = updatedAlbum;
+              renderTable();
+            } else {
+              throw new Error('Network response was not ok.');
             }
-            throw new Error('Network response was not ok.');
-          })
-          .then(function(updatedAlbum) {
-            var index = albumsList.findIndex(function(album) { return album._id === updatedAlbum._id; });
-            albumsList[index] = updatedAlbum;
-            renderTable();
-          })
-          .catch(function(error) {
+          } catch (error) {
             console.log('There was a problem with the fetch operation:', error);
-          });
+          }
         }
-        
+
+
         function confirmDelete(id) {
           if (confirm('Are you sure you want to delete this album?' + id)) {
             deleteAlbum(id);
@@ -94,23 +107,67 @@
         
         function deleteAlbum(id) {
             fetch('/api/albums/' + id, {
-            method: 'DELETE'
+              method: 'DELETE'
             })
             .then(function(response) {
-            if (response.ok) {
+              if (response.ok) {
                 return response.json();
-            }
-            throw new Error('Network response was not ok.');
+              }
+              throw new Error('Network response was not ok.');
             })
             .then(function(deletedAlbum) {
-            var index = albumsList.findIndex(function(album) { return album._id === deletedAlbum._id; });
-            data.splice(index, 1);
-            renderTable();
+              var index = albumsList.findIndex(function(album) { return album._id === deletedAlbum._id; });
+              albumsList.splice(index, 1); 
+              renderTable();
+              location.reload();
             })
             .catch(function(error) {
-            console.log('There was a problem with the fetch operation:', error);
+              console.log('There was a problem with the fetch operation:', error);
             });
         }
+
+        function renderTable() {
+          var tableBody = document.querySelector('tbody');
+          tableBody.innerHTML = '';
+
+          albumsList.forEach(function(album) {
+            var row = document.createElement('tr');
+
+            var titleCell = document.createElement('td');
+            titleCell.textContent = album.title;
+            row.appendChild(titleCell);
+
+            var artistCell = document.createElement('td');
+            artistCell.textContent = album.artist;
+            row.appendChild(artistCell);
+
+            var yearCell = document.createElement('td');
+            yearCell.textContent = album.year;
+            row.appendChild(yearCell);
+
+            var optionsCell = document.createElement('td');
+            var updateButton = document.createElement('button');
+            updateButton.textContent = 'Update';
+            updateButton.classList.add('btn', 'btn-primary');
+            updateButton.addEventListener('click', function() {
+              showUpdateForm(album._id);
+            });
+            optionsCell.appendChild(updateButton);
+
+            var deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.classList.add('btn', 'btn-danger');
+            deleteButton.addEventListener('click', function() {
+              confirmDelete(album._id);
+            });
+            optionsCell.appendChild(deleteButton);
+
+            row.appendChild(optionsCell);
+
+            tableBody.appendChild(row);
+          });
+        }
+
     </script>
 </body>
 </html>

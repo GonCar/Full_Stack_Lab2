@@ -27,27 +27,29 @@ router.post('/albums', async (req, res) => {
 });
 
 router.put('/albums/:_id', async (req, res) => {
-    const album = await Album.findOne({ id: req.params.id });
+    const album = await Album.findOne({ _id: req.params._id });
     if (!album) {
-        res.status(404).json({ error: 'Album not found' });
+      res.status(404).json({ error: 'Album not found' });
     } else {
-        const { title, artist, year } = req.body;
-        album.title = title;
-        album.artist = artist;
-        album.year = year;
-        await album.save();
-        res.json(album);
+      const { title, artist, year } = req.body;
+      album.title = title;
+      album.artist = artist;
+      album.year = year;
+      await album.save();
+      res.json(album);
     }
-});
+  });
+  
 
 router.delete('/albums/:_id', async (req, res) => {
-    const album = await Album.findOne({ id: req.params.id });
+    const album = await Album.findOne({ _id: req.params._id });
     if (!album) {
-        res.status(404).json({ error: 'Album not found' });
+      res.status(404).json({ error: 'Album not found' });
     } else {
-        await album.remove();
-        res.json({ message: 'Album deleted' });
+      await album.remove();
+      res.json({ message: 'Album deleted' });
     }
-});
+  });
+  
 
 module.exports = router;
